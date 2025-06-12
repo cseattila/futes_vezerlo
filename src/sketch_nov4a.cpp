@@ -193,12 +193,12 @@ void loop() {
   }
 
  if (!keringeto_nyitva = false && felso_szelep_ok && ( homerseklet_felso < (cel_felso - hiszterezis))) {
-    digitalWrite(KAZAN_PIN, HIGH);
+    digitalWrite(SZELEP_KERINGETO_PIN, HIGH);
     keringeto_nyitva = true;
       client.publish(topic_cel_felso, "Felo keringetőbe bekapcsolva");
     Serial.println("Felo keringetőbe bekapcsolva");
   } else if (keringeto_nyitva && (!felso_szelep_ok || ( homerseklet_felso > (cel_felso + hiszterezis)))) {
-    digitalWrite(KAZAN_PIN, LOW);
+    digitalWrite(SZELEP_KERINGETO_PIN, LOW);
     keringeto_nyitva = false;
     client.publish(topic_cel_felso, "Felo keringetőbe kikapcsolva");
     Serial.println("Felo keringetőbe kikapcsolva");

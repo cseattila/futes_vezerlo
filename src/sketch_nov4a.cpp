@@ -61,6 +61,7 @@ const char* topic_cel_felso = "haz/kazan/esemeny";
 
 // Állapot változók
 bool kazan_be = false;
+bool keringeto_nyitva = false;
 bool szelep_also_nyitva = false;
 bool szelep_felso_nyitva = false;
 
@@ -68,13 +69,13 @@ unsigned long szelep_also_nyitva_ido = 0;
 unsigned long szelep_felso_nyitva_ido = 0;
 
 // MQTT-n érkező értékek
-float homerseklet_also = 0.0;
-float homerseklet_felso = 0.0;
+float homerseklet_also = 20.0;
+float homerseklet_felso = 20.0;
 float cel_also = 21.0;
 float cel_felso = 21.0;
 
 // Hiszterézis érték (pl. +/-1 fok)
-const float hiszterezis = 1.0;
+const float hiszterezis = 0.1;
 
 // Szelep nyitási idő (ms)
 const unsigned long szelep_nyitasi_ido = 15000;
@@ -143,12 +144,15 @@ void nyit_szelep(int pin, bool& szelep_flag, unsigned long& nyitva_ido) {
   digitalWrite(pin, HIGH); // relé NO → NYITÁS
   szelep_flag = true;
   nyitva_ido = millis();
+  
+  client.publish(topic_cel_felso, "Szelep %d NYITÁS (HIGH)");
   Serial.printf("Szelep %d NYITÁS (HIGH)\n", pin);
 }
 
 void zar_szelep(int pin, bool& szelep_flag) {
   digitalWrite(pin, LOW); // relé NC → ZÁRÁS
   szelep_flag = false;
+  client.publish(topic_cel_felso, "Szelep %d ZÁRÁS (LOW)");
   Serial.printf("Szelep %d ZÁRÁS (LOW)\n", pin);
 }
 String getDataFromAPI();
@@ -172,17 +176,32 @@ void loop() {
   }
 
   unsigned long most = millis();
+  bool felso_szelep_ok =      (szelep_felso_nyitva && (most - szelep_felso_nyitva_ido >= szelep_nyitasi_ido));
   bool szelep_ok = (szelep_also_nyitva && (most - szelep_also_nyitva_ido >= szelep_nyitasi_ido)) ||
-                   (szelep_felso_nyitva && (most - szelep_felso_nyitva_ido >= szelep_nyitasi_ido));
+                   felso_szelep_ok;
 
   if (!kazan_be && szelep_ok && (homerseklet_also < (cel_also - hiszterezis) || homerseklet_felso < (cel_felso - hiszterezis))) {
     digitalWrite(KAZAN_PIN, HIGH);
     kazan_be = true;
+      client.publish(topic_cel_felso, "Kazán bekapcsolva");
     Serial.println("Kazán bekapcsolva");
   } else if (kazan_be && (!szelep_ok || (homerseklet_also > (cel_also + hiszterezis) && homerseklet_felso > (cel_felso + hiszterezis)))) {
     digitalWrite(KAZAN_PIN, LOW);
     kazan_be = false;
+      client.publish(topic_cel_felso, "Kazán kikapcsolva");
     Serial.println("Kazán kikapcsolva");
+  }
+
+ if (!keringeto_nyitva = false && felso_szelep_ok && ( homerseklet_felso < (cel_felso - hiszterezis))) {
+    digitalWrite(KAZAN_PIN, HIGH);
+    keringeto_nyitva = true;
+      client.publish(topic_cel_felso, "Felo keringetőbe bekapcsolva");
+    Serial.println("Felo keringetőbe bekapcsolva");
+  } else if (keringeto_nyitva && (!felso_szelep_ok || ( homerseklet_felso > (cel_felso + hiszterezis)))) {
+    digitalWrite(KAZAN_PIN, LOW);
+    keringeto_nyitva = false;
+    client.publish(topic_cel_felso, "Felo keringetőbe kikapcsolva");
+    Serial.println("Felo keringetőbe kikapcsolva");
   }
 
   delay(1000);

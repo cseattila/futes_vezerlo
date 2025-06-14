@@ -94,36 +94,40 @@ void callback(char* topic, byte* payload, unsigned int length) {
   else if (String(topic) == topic_cel_felso) cel_felso = ertek;
 }
 
-void setup() {
-  Serial.begin(9600);
-  
-  Serial.println(F("Start csengeri futes verzerlo"));
-
-  pinMode(pins[0], OUTPUT);
-
-  pinMode(pins[1], OUTPUT);
-
-  pinMode(pins[2], OUTPUT);
-
-  pinMode(pins[3], OUTPUT);
-
-   digitalWrite(KAZAN_PIN, LOW);
+void initGPIO() {
+  for (byte pin : pins) {
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
+  }
   digitalWrite(SZELEP_ALSO_PIN, HIGH);
   digitalWrite(SZELEP_FELSO_PIN, HIGH);
   digitalWrite(SZELEP_KERINGETO_PIN, LOW);
-
   pinMode(BUZZER_PIN, OUTPUT);
-  sensors.begin();
- WiFi.begin(ssid, password);
+}
+
+
+void connectWiFi() {
+  WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("WiFi csatlakozva");
+}
+
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println(F("Start csengeri futes verzerlo"));
+
+  initGPIO();
+  sensors.begin();
+  connectWiFi();
 
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
 }
+
 
 void reconnect() {
   while (!client.connected()) {
@@ -157,23 +161,22 @@ void zar_szelep(int pin, bool& szelep_flag) {
 }
 String getDataFromAPI();
 
+
+void handleSzelep(int pin, float homerseklet, float cel, bool& szelep_nyitva, unsigned long& szelep_nyitva_ido) {
+  if (homerseklet < (cel - hiszterezis)) {
+    if (!szelep_nyitva) nyit_szelep(pin, szelep_nyitva, szelep_nyitva_ido);
+  } else if (homerseklet > (cel + hiszterezis)) {
+    if (szelep_nyitva) zar_szelep(pin, szelep_nyitva);
+  }
+}
+
 void loop() {
   if (!client.connected()) reconnect();
   client.loop();
 
-  // Alsó szelep vezérlése
-  if (homerseklet_also < (cel_also - hiszterezis)) {
-    if (!szelep_also_nyitva) nyit_szelep(SZELEP_ALSO_PIN, szelep_also_nyitva, szelep_also_nyitva_ido);
-  } else if (homerseklet_also > (cel_also + hiszterezis)) {
-    if (szelep_also_nyitva) zar_szelep(SZELEP_ALSO_PIN, szelep_also_nyitva);
-  }
+  handleSzelep(SZELEP_ALSO_PIN, homerseklet_also, cel_also, szelep_also_nyitva, szelep_also_nyitva_ido);
+  handleSzelep(SZELEP_FELSO_PIN, homerseklet_felso, cel_felso, szelep_felso_nyitva, szelep_felso_nyitva_ido);
 
-  // Felső szelep vezérlése
-  if (homerseklet_felso < (cel_felso - hiszterezis)) {
-    if (!szelep_felso_nyitva) nyit_szelep(SZELEP_FELSO_PIN, szelep_felso_nyitva, szelep_felso_nyitva_ido);
-  } else if (homerseklet_felso > (cel_felso + hiszterezis)) {
-    if (szelep_felso_nyitva) zar_szelep(SZELEP_FELSO_PIN, szelep_felso_nyitva);
-  }
 
   unsigned long most = millis();
   bool felso_szelep_ok =      (szelep_felso_nyitva && (most - szelep_felso_nyitva_ido >= szelep_nyitasi_ido));

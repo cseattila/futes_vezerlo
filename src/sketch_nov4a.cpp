@@ -164,6 +164,8 @@ void mqtt_register_entities() {
   client.publish(homeasdistantConfigalso, config_also.c_str(), true);
   client.publish(homeasdistantConfigfelso, config_felso.c_str(), true);
   client.publish(homeasdistantConfighomero, config_homero.c_str(), true);
+  Serial.printf("MQTT Home Assistant konfigurációk elküldve:\n%s\n%s\n%s\n",
+                config_also.c_str(), config_felso.c_str(), config_homero.c_str());
 }
 void setup() {
   Serial.begin(9600);

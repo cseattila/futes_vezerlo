@@ -94,7 +94,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.printf("qtt msg %s ertek %s\n", topic,message);
   
   if (String(topic).endsWith("/set")) {
-     client.publish(String(topic).substring(0,strlen(topic)-5).c_str(), payload, true);
+     client.publish(String(topic).substring(0,strlen(topic)-4).c_str(), payload, true);
   }
   
   if (String(topic) == topic_also) homerseklet_also = ertek;

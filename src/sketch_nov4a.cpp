@@ -92,8 +92,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
    
   Serial.printf("qtt msg %s ertek %s\n", topic,message);
+  
+  if (String(topic).endsWith("/set")) {
+     client.publish(String(topic).substring(0,strlen(topic)-5).c_str(), payload, true);
+  }
+  
   if (String(topic) == topic_also) homerseklet_also = ertek;
   else if (String(topic) == topic_felso) homerseklet_felso = ertek;
+
   else if (String(topic) == topic_cel_also) cel_also = ertek;
   else if (String(topic) == topic_cel_felso) cel_felso = ertek;
 }
@@ -178,8 +184,8 @@ void reconnect() {
     if (client.connect("ESP32Kazán")) {
       client.subscribe(topic_also);
       client.subscribe(topic_felso);
-      client.subscribe(topic_cel_also);
-      client.subscribe(topic_cel_felso);
+      client.subscribe((String(topic_cel_also)+"/set").c_str());
+      client.subscribe((String(topic_cel_felso)+"/set").c_str());
     } else {
       delay(2000);
     }

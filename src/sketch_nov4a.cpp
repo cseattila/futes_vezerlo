@@ -51,9 +51,13 @@ PubSubClient client(espClient);
 // MQTT témák
 const char* topic_also = "haz/homerseklet/also";
 const char* topic_felso = "haz/homerseklet/felso";
-const char* topic_cel_also = "haz/kazan/celhomerseklet/also";
+
+const char* topic_cel_also =  "haz/kazan/celhomerseklet/also";
 const char* topic_cel_felso = "haz/kazan/celhomerseklet/felso";
 
+const char* homeasdistantConfigalso = "homeassistant/climate/felso/config";
+const char* homeasdistantConfigfelso = "homeassistant/climate/felso/config";
+const char* homeasdistantConfighomero = "homeassistant/sensor/vezerlohaz/config";
 const char* topic_esemeny = "haz/kazan/esemeny";
 
 
@@ -115,17 +119,57 @@ void connectWiFi() {
   Serial.println("WiFi csatlakozva");
 }
 
+ uint64_t chipid ;
 
+void mqtt_register_entities() {
+  // Home Assistant konfigurációk
+  String config_also = String ("{")+
+  "\"name\": \"Alsó szint\", "+
+  "\"uniq_id\": \"termo_also\","+
+  "\"current_temperature_topic\": \""+topic_cel_also+"\","+
+  "\"temperature_command_topic\": "+topic_cel_also+"/set,"+
+  "\"temperature_state_topic\": "+topic_also+","+
+  "\"min_temp\": 16,"+
+  "\"max_temp\": 28,"+
+  "\"modes\": [\"heat\"]"+
+  "}"
+  ;
+
+  String config_felso = String ("{")+
+  "\"name\": \"Felso szint\", "+
+  "\"uniq_id\": \"termo_also\","+
+  "\"current_temperature_topic\": \""+topic_cel_felso+"\","+
+  "\"temperature_command_topic\": "+topic_cel_felso+"/set,"+
+  "\"temperature_state_topic\": "+topic_felso+","+
+  "\"min_temp\": 16,"+
+  "\"max_temp\": 28,"+
+  "\"modes\": [\"heat\"]"+
+  "}"
+  ;
+
+  String config_homero = String("{")+
+  "\"name\": \"Vezérlo doboz hőmérséklet\","+
+  "\"uniq_id\": \"vezdoboz_homer\","+
+  "\"state_topic\": \"vezdoboz_homer\temp","+
+  "\"unit_of_measurement\": \"°C\","+
+  "\"device_class\": \"temperature\""+
+  "}";
+
+  client.publish(homeasdistantConfigalso, config_also.c_str(), true);
+  client.publish(homeasdistantConfigfelso, config_felso.c_str(), true);
+  client.publish(homeasdistantConfighomero, config_homero.c_str(), true);
+}
 void setup() {
   Serial.begin(9600);
-  Serial.println(F("Start csengeri futes verzerlo"));
+ = ESP.getEfuseMac();
+  Serial.println(F("Start csengeri futes verzerlo(%04X%08X)", (uint16_t)(chipid >> 32), (uint32_t)chipid));
 
   initGPIO();
   sensors.begin();
   connectWiFi();
-
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
+  mqtt_register_entities();
 }
 
 

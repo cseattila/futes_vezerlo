@@ -177,7 +177,7 @@ void setup() {
   connectWiFi();
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
-  mqtt_register_entities();
+ 
 }
 
 
@@ -188,7 +188,13 @@ void reconnect() {
       client.subscribe(topic_felso);
       client.subscribe((String(topic_cel_also)+"/set").c_str());
       client.subscribe((String(topic_cel_felso)+"/set").c_str());
+       mqtt_register_entities();
     } else {
+       if (WiFi.status() != WL_CONNECTED) {
+        Serial.print("WiFi nem csatlakozott, újra próbálkozás...");
+        connectWiFi();
+       }
+        
       delay(2000);
     }
   }

@@ -150,7 +150,7 @@ void mqtt_register_entities() {
   String config_homero = String("{")+
   "\"name\": \"Vezérlo doboz hőmérséklet\","+
   "\"uniq_id\": \"vezdoboz_homer\","+
-  "\"state_topic\": \"vezdoboz_homer\temp","+
+  "\"state_topic\": \"vezdoboz_homer\temp\","+
   "\"unit_of_measurement\": \"°C\","+
   "\"device_class\": \"temperature\""+
   "}";
@@ -161,8 +161,8 @@ void mqtt_register_entities() {
 }
 void setup() {
   Serial.begin(9600);
- = ESP.getEfuseMac();
-  Serial.println(F("Start csengeri futes verzerlo(%04X%08X)", (uint16_t)(chipid >> 32), (uint32_t)chipid));
+  chipid = ESP.getEfuseMac();
+  Serial.printf("Start csengeri futes verzerlo(%04X%08X)", (uint16_t)(chipid >> 32), (uint32_t)chipid);
 
   initGPIO();
   sensors.begin();

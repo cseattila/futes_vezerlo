@@ -34,7 +34,7 @@ const int mqtt_port = 1883;
 #define SZELEP_KERINGETO_PIN 4
 #define BUZZER_PIN 18
 
-byte pins[] = {KAZAN_PIN, SZELEP_ALSO_PIN, SZELEP_FELSO_PIN, SZELEP_KERINGETO_PIN};
+byte pins[] = {KAZAN_PIN, SZELEP_ALSO_PIN, SZELEP_FELSO_PIN, SZELEP_KERINGETO_PIN,BUZZER_PIN};
 float currentTemperature=20;
 
 int ido =0;
@@ -109,10 +109,6 @@ void initGPIO() {
     pinMode(pin, OUTPUT);
     digitalWrite(pin, LOW);
   }
-  digitalWrite(SZELEP_ALSO_PIN, HIGH);
-  digitalWrite(SZELEP_FELSO_PIN, HIGH);
-  digitalWrite(SZELEP_KERINGETO_PIN, LOW);
-  pinMode(BUZZER_PIN, OUTPUT);
 }
 
 
@@ -235,8 +231,10 @@ void loop() {
   handleSzelep(SZELEP_ALSO_PIN, homerseklet_also, cel_also, szelep_also_nyitva, szelep_also_nyitva_ido);
   handleSzelep(SZELEP_FELSO_PIN, homerseklet_felso, cel_felso, szelep_felso_nyitva, szelep_felso_nyitva_ido);
 
+  
 
   unsigned long most = millis();
+  // Ellenőrizzük, hogy a szelepek nyitva vannak-e és eltelt-e a nyitási idő
   bool felso_szelep_ok =      (szelep_felso_nyitva && (most - szelep_felso_nyitva_ido >= szelep_nyitasi_ido));
   bool szelep_ok = (szelep_also_nyitva && (most - szelep_also_nyitva_ido >= szelep_nyitasi_ido)) ||
                    felso_szelep_ok;
@@ -253,7 +251,7 @@ void loop() {
     Serial.println("Kazán kikapcsolva");
   }
 
- if (!keringeto_nyitva  && felso_szelep_ok && ( homerseklet_felso < (cel_felso - hiszterezis))) {
+  if (!keringeto_nyitva  && felso_szelep_ok && ( homerseklet_felso < (cel_felso - hiszterezis))) {
     digitalWrite(SZELEP_KERINGETO_PIN, HIGH);
     keringeto_nyitva = true;
       client.publish(topic_esemeny, "Felo keringetőbe bekapcsolva");
